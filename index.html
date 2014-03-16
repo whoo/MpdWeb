@@ -12,13 +12,21 @@
 		<script src="js/jquery-2.1.0.min.js"></script>
 		<script src="js/jquery.mobile-1.4.2.min.js"></script>
 
-	    <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<link rel="apple-touch-icon" href="css/logo.png"/>
+
 
 <script>
 var data;
 function load(num)
 {
 $.ajax({ url: "run.php?cmd=play "+num});
+refresh();
+}
+
+function del(num)
+{
+$.ajax({ url: "run.php?cmd=delete "+num});
 refresh();
 }
 
@@ -32,38 +40,84 @@ var test;
 
 function runC()
 {
-$("#command").val();
-$("#cmd").html("load");
-$.get("run.php?cmd="+$("#command").val(), function (d) { test= d; $("#cmd").html("");  $.each(test,function(i,v) { $('#cmd').append(i+":"+v+"\n"); }) } );
+	$("#command").val();
+	$("#cmd").html("load");
+	$.get("run.php?cmd="+$("#command").val(), function (d) 
+			{ test= d; $("#cmd").html("");  
+			$.each(test,function(i,v) 
+				{ $('#cmd').append(i+":"+v+"\n"); }) 
+			} );
+}
 
+
+function Rrun(cmd)
+{
+$.get("run.php?cmd="+buildCmd(cmd),function(d) {test=d; });
+return 1;
+}
+
+function buildCmd(cmd)
+{
+	var str="command_list_begin%0A";
+	$.each(cmd,function(i,v){ 
+			str+=v+"%0a";
+			});
+
+	str+="command_list_end";
+	return str;
 }
 
 
 function refresh()
 {
-	$.get("run.php?cmd=command_list_begin%0aplaylist%0Astatus%0Acommand_list_end",function (d) { 
-			data=d; $("#songtitle").html(d[d.song]);
-			$("li").remove();
+	$.get("run.php?cmd="+buildCmd(["playlist","status","currentsong"]),function (d) { 
+			data=d; 
+			$("#songtitle").html("Current:"+d['Title']+" - "+d['Artist']);
+			$("#slider-3").val(d['volume']).slider("refresh");
+			$("#playlist li").remove();
+			$("#playlistEdit li").remove();
 			for (a=0;a<data.playlistlength;a++) {
-			
-	if (a!=data.song) {
-	$("ul").append($("<li/>").append($("<a/>",{'href':'javascript:load('+a+')','text':a+" : "+data[a],'class':'ui-btn',})));
-	}
-	else 
-	{
-	$("ul").append($("<li/>","{'class':'a'}").append($("<a/>",{'href':'javascript:load('+a+')','text':a+" "+data[a],'data-icon':'check','data-role':'button'})));
 
-	}
+			$("#playlistEdit").append($("<li/>")
+				.append($("<a/>",{'href':'javascript:del('+a+')','text':a+" : "+data[a],'data-role':'button','data-icon':'delete'})));
+			if (a!=data.song) {
+			$("#playlist").append($("<li/>")
+				.append($("<a/>",{'href':'javascript:load('+a+')','text':a+" : "+data[a],'class':'ui-btn',})));
+			}
+			else 
+			{
+			$("#playlist").append($("<li/>","{'class':'a'}")
+				.append($("<a/>",{'href':'javascript:load('+a+')','text':a+" "+data[a],'data-icon':'check','data-role':'button'})));
 
-	}
-	$("ul").listview("refresh");
+			}
 
-
+			}
+			refreshoption();	
+			$("#playlist").listview("refresh");
+			$("#playlistEdit").listview("refresh");
 			})
 
 }
 
-onload.windows=refresh();
+function refreshoption()
+{
+
+
+return true;
+}
+
+
+function GoForce()
+{
+	refresh();
+	$("#slider-3").on("slidestop",function(event,ui) { Rrun(["setvol "+$("#slider-3").val(),"pulsesync"]); } );
+	return 1;
+}
+
+$(document).ready(function() {
+GoForce();
+});
+
 </script>
 
 </head>
@@ -73,44 +127,73 @@ onload.windows=refresh();
 
 <div data-role="controlgroup"  data-type="horizontal"> 
 <a href="javascript:refresh()" data-role="button" data-icon="refresh" data-iconpos="notext">Refresh</a>
-<a href="javascript:run('play')" data-role="button" data-icon="arrow-r" data-iconpos="notext">Play</a>
+<a href="javascript:Rrun(['play','pulsesync'])" data-role="button" data-icon="check" data-iconpos="notext">Play</a>
 <a href="javascript:run('stop')" data-role="button" data-icon="delete" data-iconpos="notext">stop</a>
-<a href="javascript:run('next')" data-role="button" data-icon="plus" data-iconpos="notext">Next</a>
+<a href="javascript:run('previous')" data-role="button" data-icon="back" data-iconpos="notext">Prev</a>
+<a href="javascript:run('next')" data-role="button" data-icon="forward" data-iconpos="notext">Next</a>
+<a href="#playlist" data-role="button" data-icon="home" data-iconpos="notext" data-transition='flip'>Options</a>
+<a href="#OptionMpd" data-role="button" data-icon="grid" data-iconpos="notext" data-transition='flip'>Options</a>
+<a href="#Debug" data-role="button" data-icon="gear" data-iconpos="notext" data-transition='flip'>Options</a>
 
-<div data-role="fieldcontain">
+<div data-role="fieldcontain" class = "ui-button-l">
 <input type="range" name="slider-3" id="slider-3" value="25" min="0" max="100" data-theme="a" data-track-theme="b" />
 </div>
 </div>
 
-<a href="#bar" data-role="button" data-icon="gear" data-iconpos="notext" class="ui-btn-right" data-transition='flip'>Options</a>
 
 
 
 	</div><!-- /header -->
 	<div role="main" class="ui-content">
-<ul data-role='listview' data-inset='true' data-filter='true'/>
+<ul data-role='listview' data-inset='true' data-filter='true' id="playlist"/>
 	</div><!-- /content -->
 	<div data-role="footer"  data-position="fixed">
 	<p id='songtitle'>Playing: </p> 
 	</div><!-- /footer -->
 </div><!-- /page -->
 
+<div data-role="page" id="OptionMpd" data-theme='a'>
+<div data-role="header" data-add-back-btn="true">
+<h1>Options</h1>
+</div>
+<div data-role="main" class="ui-content" id=options>
+<select data-role="slider" name="random"><option value="yes">Random</option> <option value="no">No</option> </select><br>
+<select data-role="slider" name="consume"><option value="yes">Consume</option> <option value="no">No</option></select>
+</div>
+<div data-role="footer" data-position='fixed'>
+Foot
+</div>
+</div>
 
-<div data-role="page" id="bar" data-theme='b'>
-	<div data-role="header" data-add-back-btn="true"> 
-	<h1>Command</h1>
+<div data-role="page" id="playlist" data-theme='a'>
+<div data-role="header" data-add-back-btn="true">
+<h1>Playlist</h1>
+</div>
+<div data-role="main" class="ui-content" >
+<ul data-role='listview' data-inset='true' data-filter='true' id="playlistEdit"/>
+</div>
+<div data-role="footer" data-position='fixed'>
+Foot
+</div>
+</div>
+
+
+
+<div data-role="page" id="Debug" data-theme='b'>
+<div data-role="header" data-add-back-btn="true"> 
+<h1>Command</h1>
 <div data-role="controlgroup"  data-type="horizontal">
 </div>
 </div><!-- /header -->
 <div role="main" class="ui-content">
-
 <input id=command onChange=javascript:runC()>
 <pre id=cmd>
 </pre>
 </div><!-- /content -->
-
 <div data-role="footer" data-position='fixed'>
 </div><!-- /footer -->
 </div><!-- /page -->
+
+
 </body>
 </html>
