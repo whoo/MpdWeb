@@ -1,0 +1,44 @@
+diff -rupN src.orig/command.c src/command.c
+--- src.orig/command.c	2014-03-16 09:17:14.461433244 -0400
++++ src/command.c	2014-03-16 09:17:46.525430116 -0400
+@@ -72,6 +72,7 @@
+ #include <time.h>
+ #include <stdlib.h>
+ #include <errno.h>
++#include <unistd.h>
+ 
+ #define COMMAND_STATUS_STATE            "state"
+ #define COMMAND_STATUS_REPEAT           "repeat"
+@@ -325,6 +326,24 @@ handle_pause(struct client *client,
+ 	return COMMAND_RETURN_OK;
+ }
+ 
++
++static enum command_return 
++handle_pulsesync(struct client *client,
++              G_GNUC_UNUSED int argc, G_GNUC_UNUSED char *argv[])
++{
++	char *args1[]={"pacmd","unload-module","module-rtp-send",NULL};
++	char *args2[]={"pacmd","load-module","module-rtp-send","source=rtp.monitor","mtu=16000","loop=1","rate=44100","port=5555","ttl=2","channels=2",NULL};
++        client_printf(client,"Sync Pulse Audio RTP\n");
++        client_printf(client,"Sound will stop/start\n");
++//	execv("/usr/bin/pacmd",args1);
++//	execv("/usr/bin/pacmd",args2);
++	system("pacmd unload-module module-rtp-send");
++	system("pacmd load-module module-rtp-send source=rtp.monitor mtu=16000 loop=1 rate=44100 port=5555 ttl=2 channels=2");
++
++return COMMAND_RETURN_OK;
++}
++
++
+ static enum command_return
+ handle_status(struct client *client,
+ 	      G_GNUC_UNUSED int argc, G_GNUC_UNUSED char *argv[])
+@@ -2046,6 +2065,7 @@ static const struct command commands[] =
+ 	{ "previous", PERMISSION_CONTROL, 0, 0, handle_previous },
+ 	{ "prio", PERMISSION_CONTROL, 2, -1, handle_prio },
+ 	{ "prioid", PERMISSION_CONTROL, 2, -1, handle_prioid },
++	{ "pulsesync", PERMISSION_READ, 0, 0, handle_pulsesync },
+ 	{ "random", PERMISSION_CONTROL, 1, 1, handle_random },
+ 	{ "readmessages", PERMISSION_READ, 0, 0, handle_read_messages },
+ 	{ "rename", PERMISSION_CONTROL, 2, 2, handle_rename },
