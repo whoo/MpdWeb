@@ -47,12 +47,14 @@ function runC()
 			$.each(test,function(i,v) 
 				{ $('#cmd').append(i+":"+v+"\n"); }) 
 			} );
+	refresh();
 }
 
 
 function Rrun(cmd)
 {
 $.get("run.php?cmd="+buildCmd(cmd),function(d) {test=d; });
+refresh();
 return 1;
 }
 
