@@ -128,9 +128,9 @@ GoForce();
 <div data-role="controlgroup"  data-type="horizontal"> 
 <a href="javascript:refresh()" data-role="button" data-icon="refresh" data-iconpos="notext">Refresh</a>
 <a href="javascript:Rrun(['play','pulsesync'])" data-role="button" data-icon="check" data-iconpos="notext">Play</a>
-<a href="javascript:run('stop')" data-role="button" data-icon="delete" data-iconpos="notext">stop</a>
-<a href="javascript:run('previous')" data-role="button" data-icon="back" data-iconpos="notext">Prev</a>
-<a href="javascript:run('next')" data-role="button" data-icon="forward" data-iconpos="notext">Next</a>
+<a href="javascript:Rrun(['stop','pulseoff'])" data-role="button" data-icon="delete" data-iconpos="notext">stop</a>
+<a href="javascript:run(['pulseoff','previous','pulseon'])" data-role="button" data-icon="back" data-iconpos="notext">Prev</a>
+<a href="javascript:Rrun(['pulseoff','next','pulseon'])" data-role="button" data-icon="forward" data-iconpos="notext">Next</a>
 <a href="#playlist" data-role="button" data-icon="home" data-iconpos="notext" data-transition='flip'>Options</a>
 <a href="#OptionMpd" data-role="button" data-icon="grid" data-iconpos="notext" data-transition='flip'>Options</a>
 <a href="#Debug" data-role="button" data-icon="gear" data-iconpos="notext" data-transition='flip'>Options</a>
