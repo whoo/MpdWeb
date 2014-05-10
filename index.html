@@ -18,25 +18,11 @@
 
 <script>
 var data;
-function load(num)
-{
-$.ajax({ url: "run.php?cmd=play "+num});
-refresh();
-}
-
-function del(num)
-{
-$.ajax({ url: "run.php?cmd=delete "+num});
-refresh();
-}
-
-function run(cmd)
-{
-	$.get("run.php?cmd="+cmd);
-	refresh();
-}
-
 var test;
+
+function load(num) { $.ajax({ url: "run.php?cmd=play "+num}); }
+function del(num) { $.ajax({ url: "run.php?cmd=delete "+num}); }
+function run(cmd) { $.get("run.php?cmd="+cmd); }
 
 function runC()
 {
@@ -47,14 +33,12 @@ function runC()
 			$.each(test,function(i,v) 
 				{ $('#cmd').append(i+":"+v+"\n"); }) 
 			} );
-	refresh();
 }
 
 
 function Rrun(cmd)
 {
 $.get("run.php?cmd="+buildCmd(cmd),function(d) {test=d; });
-refresh();
 return 1;
 }
 
@@ -74,8 +58,12 @@ function refresh()
 {
 	$.get("run.php?cmd="+buildCmd(["playlist","status","currentsong"]),function (d) { 
 			data=d; 
-			$("#songtitle").html("Current:"+d['Title']+" - "+d['Artist']);
+			$("#songtitle").html("Current:"+d['Title']+" - "+d['Artist']+" - "+d['time']);
 			$("#slider-3").val(d['volume']).slider("refresh");
+
+			if (d['state']=='play')
+			$("#progressbar").css('width',Math.round(d['time'].split(':')[0]/d['time'].split(':')[1]*100)+'%')
+
 			$("#playlist li").remove();
 			$("#playlistEdit li").remove();
 			for (a=0;a<data.playlistlength;a++) {
@@ -111,9 +99,18 @@ return true;
 
 function GoForce()
 {
-	refresh();
 	$("#slider-3").on("slidestop",function(event,ui) { Rrun(["setvol "+$("#slider-3").val(),"pulsesync"]); } );
+	$("#playlistEdit").listview();
+	$("#playlist").listview();
+	loop()
 	return 1;
+}
+
+function loop()
+{
+refresh();
+setTimeout('loop()',1000);
+
 }
 
 $(document).ready(function() {
@@ -137,10 +134,12 @@ GoForce();
 <a href="#OptionMpd" data-role="button" data-icon="grid" data-iconpos="notext" data-transition='flip'>Options</a>
 <a href="#Debug" data-role="button" data-icon="gear" data-iconpos="notext" data-transition='flip'>Options</a>
 
-<div data-role="fieldcontain" class = "ui-button-l">
+</div>
+<div data-role="fieldcontain" class = "ui-button-l" id='sliders' >
 <input type="range" name="slider-3" id="slider-3" value="25" min="0" max="100" data-theme="a" data-track-theme="b" />
 </div>
-</div>
+
+
 
 
 
@@ -151,6 +150,8 @@ GoForce();
 	</div><!-- /content -->
 	<div data-role="footer"  data-position="fixed">
 	<p id='songtitle'>Playing: </p> 
+
+<div id=progressbar style='background-color:#800000' >&nbsp;</div>
 	</div><!-- /footer -->
 </div><!-- /page -->
 
