@@ -1,44 +1,67 @@
-diff -rupN src.orig/command.c src/command.c
---- src.orig/command.c	2014-03-16 09:17:14.461433244 -0400
-+++ src/command.c	2014-03-16 09:17:46.525430116 -0400
-@@ -72,6 +72,7 @@
- #include <time.h>
- #include <stdlib.h>
- #include <errno.h>
-+#include <unistd.h>
- 
- #define COMMAND_STATUS_STATE            "state"
- #define COMMAND_STATUS_REPEAT           "repeat"
-@@ -325,6 +326,24 @@ handle_pause(struct client *client,
- 	return COMMAND_RETURN_OK;
- }
- 
-+
-+static enum command_return 
-+handle_pulsesync(struct client *client,
-+              G_GNUC_UNUSED int argc, G_GNUC_UNUSED char *argv[])
-+{
-+	char *args1[]={"pacmd","unload-module","module-rtp-send",NULL};
-+	char *args2[]={"pacmd","load-module","module-rtp-send","source=rtp.monitor","mtu=16000","loop=1","rate=44100","port=5555","ttl=2","channels=2",NULL};
-+        client_printf(client,"Sync Pulse Audio RTP\n");
-+        client_printf(client,"Sound will stop/start\n");
-+//	execv("/usr/bin/pacmd",args1);
-+//	execv("/usr/bin/pacmd",args2);
-+	system("pacmd unload-module module-rtp-send");
-+	system("pacmd load-module module-rtp-send source=rtp.monitor mtu=16000 loop=1 rate=44100 port=5555 ttl=2 channels=2");
-+
-+return COMMAND_RETURN_OK;
-+}
-+
-+
- static enum command_return
- handle_status(struct client *client,
- 	      G_GNUC_UNUSED int argc, G_GNUC_UNUSED char *argv[])
-@@ -2046,6 +2065,7 @@ static const struct command commands[] =
+diff -rupN src.orig/command/AllCommands.cxx src/command/AllCommands.cxx
+--- src.orig/command/AllCommands.cxx	2014-02-27 17:07:14.000000000 -0500
++++ src/command/AllCommands.cxx	2014-06-07 14:40:58.000000000 -0400
+@@ -127,6 +127,9 @@ static const struct command commands[] =
  	{ "previous", PERMISSION_CONTROL, 0, 0, handle_previous },
  	{ "prio", PERMISSION_CONTROL, 2, -1, handle_prio },
  	{ "prioid", PERMISSION_CONTROL, 2, -1, handle_prioid },
-+	{ "pulsesync", PERMISSION_READ, 0, 0, handle_pulsesync },
++	{ "pulseoff", PERMISSION_CONTROL, 0, 0, handle_pulseoff },
++	{ "pulseon", PERMISSION_CONTROL, 0, 0, handle_pulseon },
++	{ "pulsesync", PERMISSION_CONTROL, 0, 0, handle_pulsesync },
  	{ "random", PERMISSION_CONTROL, 1, 1, handle_random },
+ 	{ "readcomments", PERMISSION_READ, 1, 1, handle_read_comments },
  	{ "readmessages", PERMISSION_READ, 0, 0, handle_read_messages },
- 	{ "rename", PERMISSION_CONTROL, 2, 2, handle_rename },
+diff -rupN src.orig/command/PlayerCommands.cxx src/command/PlayerCommands.cxx
+--- src.orig/command/PlayerCommands.cxx	2013-12-11 14:51:53.000000000 -0500
++++ src/command/PlayerCommands.cxx	2014-06-07 14:58:05.000000000 -0400
+@@ -392,3 +392,31 @@ handle_replay_gain_status(Client &client
+ 		      replay_gain_get_mode_string());
+ 	return CommandResult::OK;
+ }
++
++
++
++CommandResult
++handle_pulseoff(Client &client, gcc_unused int argc, char *argv[])
++{
++	client_printf(client,"Stop Pulse\n");
++	system("pacmd unload-module module-rtp-send");
++	return CommandResult::OK;
++}
++
++CommandResult
++handle_pulseon(Client &client, gcc_unused int argc, char *argv[])
++{
++	client_printf(client,"Start Pulse\n");
++	system("pacmd load-module module-rtp-send source=rtp.monitor mtu=16000 loop=1 rate=44100 port=5555 ttl=2 channels=2");
++	return CommandResult::OK;
++}
++
++CommandResult
++handle_pulsesync(Client &client, gcc_unused int argc, char *argv[])
++{
++	client_printf(client,"Sound will stop/start\n");
++	system("pacmd unload-module module-rtp-send");
++	system("pacmd load-module module-rtp-send source=rtp.monitor mtu=16000 loop=1 rate=44100 port=5555 ttl=2 channels=2");
++
++	return CommandResult::OK;
++}
+diff -rupN src.orig/command/PlayerCommands.hxx src/command/PlayerCommands.hxx
+--- src.orig/command/PlayerCommands.hxx	2013-12-11 14:51:53.000000000 -0500
++++ src/command/PlayerCommands.hxx	2014-06-07 14:42:39.000000000 -0400
+@@ -87,4 +87,15 @@ handle_replay_gain_mode(Client &client,
+ CommandResult
+ handle_replay_gain_status(Client &client, int argc, char *argv[]);
+ 
++/* PULSEAUDIO HACK */
++CommandResult
++handle_pulseoff(Client &client, int argc, char *argv[]);
++
++CommandResult
++handle_pulseon(Client &client, int argc, char *argv[]);
++
++CommandResult
++handle_pulsesync(Client &client, int argc, char *argv[]);
++/* PULSEAUDIO HACK */
++
+ #endif
